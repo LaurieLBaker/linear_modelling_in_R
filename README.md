@@ -1,6 +1,6 @@
 # An Introduction to Linear Modelling in R
 
-<img src="slides/images/tidydata_5.png" alt = "Data Analysis assembly line: Wrangle, Visualise, Model" height="600px" />
+<img src="slides/images/tidydata_5.jpg" alt = "Data Analysis assembly line: Wrangle, Visualise, Model" height="500px" />
 Artwork by @AllisonHorst
 
 # You
@@ -59,7 +59,7 @@ In this course we explore linear models and their capabilities using a simulated
 
 # Slides and Exercises
 
-<img src="slides/images/dragon_residual.png" alt = "Residuals are the information left over from the model. For instance if a dragon's predicted weight is 3.9 tons but her actual weigh is 4.2 tons, the residual would be 0.3 tons" height="600px" />
+<img src="slides/images/dragon_residual.png" alt = "Residuals are the information left over from the model. For instance if a dragon's predicted weight is 3.9 tons but her actual weigh is 4.2 tons, the residual would be 0.3 tons" height="500px" />
 
 Artwork by @AllisonHorst
 
