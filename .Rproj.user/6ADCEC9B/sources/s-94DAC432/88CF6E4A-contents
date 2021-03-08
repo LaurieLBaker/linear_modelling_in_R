@@ -1,0 +1,486 @@
+---
+title: "Introduction to linear modelling"
+author: "Dr. Laurie Baker"
+date: "07/12/2020"
+output: 
+  html_document:
+    theme: cosmo
+    highlight: haddock
+    toc: TRUE
+    toc_float: TRUE
+    number_sections: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+# Learning Objectives
+
+## Exploratiory Data Analysis
+
+*   What is the difference between a continuous and categorical variable?
+
+*   What is variation and covariation?
+
+*  Where does Exploratory Data Analysis fit in with analysis?
+
+*  How to use plots to explore variation in 
+    *	A continuous variable
+    *	A categorical variable
+        
+* How to use plots to explore covariation between
+    *	Two continuous variables
+    *	A categorical and continuous variable. 
+
+
+## Model Basics
+
+  *	 What is a model family and fitted model?
+  *	 What is the difference between a response and an explanatory variable?
+    
+## Model Construction
+
+  *  How to construct a linear model in R?
+  *  What are the slope and intercept in a linear model?
+  *  Picking out key information from the model summary table.
+  *  How to extract specific parameters from the model object.
+
+## Assessing Model Fit
+  *	 How to inspect model residuals to assess model fit?
+  *	 How to pick out key information from the table from a fitted model. 
+  *  How to use Adjusted R-squared and AIC to compare models. 
+
+
+# Import the libraries
+
+```{r}
+
+#install.packages(tidyverse)
+#install.packages(broom)
+#install.packages(GGally)
+
+library(tidyverse)
+library(broom)
+library(GGally)
+
+```
+
+
+# Exploratory Data Analysis
+
+
+## Read in the data
+
+```{r salaries}
+
+salaries <- read_csv("../data/faculty-data.csv")
+
+salaries <- salaries %>%
+              mutate(department = as_factor(department))
+
+```
+
+## Explore the data
+
+* What are the variables in our data set?
+
+```{r}
+
+head(salaries)
+
+```
+
+* How many departments are in the data? How many employees are in each department?
+
+```{r}
+
+summary(salaries)
+
+```
+
+Using `View()`, what does each row in the data.frame represent?
+
+```{r}
+
+
+
+```
+
+* What's the difference between a continuous and a categorical (factor or discrete) variable?
+
+**Hint:** Country is a categorical variable, Height is a continous variable
+
+### Plotting the data
+
+* Plotting a single continuous variable
+
+
+```{r}
+
+ggplot(data = salaries) +
+   geom_density(aes(salary), fill = "blue")
+  
+
+```
+
+* Plotting a single categorical variable
+
+```{r}
+
+ggplot(data = salaries) +
+   geom_bar(aes(x = department, fill = department)) +
+   labs(x = "Department", y = "# Staff", fill = "Department")
+  
+
+```
+
+* Relationships between two continuous variables
+
+```{r}
+
+ggplot(data = salaries) +
+  geom_point(aes(x = experience, y = salary))
+
+```
+
+* Relationships between a discrete and continous variable
+
+```{r}
+
+ggplot(data = salaries) +
+  geom_boxplot(aes(x = department, y = salary, color = department))
+
+```
+
+```{r}
+
+ggplot(data = salaries) +
+  geom_violin(aes(x = department, y = salary, fill = department))
+
+```
+
+* Looking at the plot, which departments have the highest salaries? Do you think the departments are very different from one another?
+
+# Constructing a linear model
+
+
+## The relationship between salary and experience is the same across all departments.
+
+Each department has the same starting salary and the same increase in salary with experience.
+
+### Exercise:
+
+* What are our response and explanatory variables in this case?
+
+
+```{r}
+
+m1 <- lm(salary ~ experience, data = salaries)
+
+```
+
+```{r}
+summary(m1)
+```
+
+
+* **Intercept interpretation:** the starting salary is 62154 USD.
+
+* **Slope interpretation:** with every year of experience an employee's salary increases by 683.5 USD. 
+* Overall the model is a poor fit, with only 0.01235 percent of the variation explained by the model as shown by the Adjusted R-squared.
+
+
+* Plotting the fitted model
+
+```{r}
+
+m1_results <- broom::augment(m1)
+
+
+head(m1_results)
+```
+
+## Residuals
+
+What are residuals? How are they used to determine the best fit?
+
+```{r}
+
+
+ggplot(data = m1_results,
+       aes(x = experience, y = salary)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
+  geom_segment(aes(xend = experience, yend = .fitted), color = "red", size = 0.3)
+
+
+```
+
+## The four assumptions of the linear model:
+
+1. **Linearity** - The relationship between the explanatory variable ($X$) and the response variable ($Y$) must be linear.
+
+2. **Normality**- The residual must be approximately normally distributed.
+
+3. **Homoscedasticity**- The residuals are should have a constant variance.
+
+4. **Independence**- There should be no relationship between the residuals and the response variable ($Y$).
+
+
+```{r}
+
+plot(m1)
+
+```
+
+## Each department has a different starting salary but the increase in salary with experience is the same.
+
+Our data is "nested", that is we have groups within our data. We can add group, the department, as a third variable as the colour.
+
+```{r}
+
+ggplot(data = salaries) +
+  geom_point(aes(x = experience, y = salary, color = department)) +
+  labs(x="Experience", y="Salary") +
+  scale_colour_discrete('Department')
+
+```
+
+* How does the formula change if we think each group may have a different starting salary?
+
+```{r}
+m2  <- lm(salary ~ experience + department, data = salaries)
+
+```
+
+```{r}
+
+m2_results <- broom::augment(m2)
+
+ggplot(data = m2_results, 
+       aes(x = experience, y = salary, colour = department)) +
+  geom_point() +
+  labs(x="Experience", y="Salary") +
+  scale_colour_discrete('Department') +
+  geom_line(aes(y = .fitted), size = 1)
+
+```
+* Let's take a look again at those residuals
+
+```{r}
+
+ggplot(data = m2_results, 
+       aes(x = experience, y = salary, colour = department)) +
+  geom_point() +
+  labs(x="Experience", y="Salary") +
+  scale_colour_discrete('Department') +
+  geom_line(aes(y = .fitted), size = 1) +
+  geom_segment(aes(xend = experience, yend = .fitted, colour = department), size = 0.3, linetype = 2)
+
+```
+
+```{r}
+summary(m2)
+
+```
+
+* Let's inspect the residual plots again
+
+```{r}
+
+plot(m2)
+
+```
+
+If someone works in a department for 6 years, will they have a higher salary if they are in the biology or sociology department?
+
+* Let's extract the residuals using `coef`
+
+```{r}
+
+m2_coef <- coef(m2)
+
+names(m2_coef)
+
+```
+
+```{r}
+
+biology_ex6 <- m2_coef["(Intercept)"] + m2_coef["departmentbiology"] + 6*m2_coef["experience"] 
+
+
+sociology_ex6 <- m2_coef["(Intercept)"] + 6*m2_coef["experience"] 
+
+
+```
+
+```{r}
+
+m2_results <- broom::augment(m2)
+
+ggplot(data = m2_results, 
+       aes(x = experience, y = salary, colour = department)) +
+  geom_point() +
+  labs(x="Experience", y="Salary") +
+  scale_colour_discrete('Department') +
+  geom_line(aes(y = .fitted), size = 1) +
+  geom_point(aes(x = 6, y = biology_ex6), color = "black") +
+  geom_point(aes(x = 6, y = sociology_ex6), color = "black")
+
+
+```
+
+## Each department has different starting salaries and salaries increase at different rates.
+
+
+```{r}
+
+m3 <- lm(salary ~ experience*department, data = salaries)
+
+m3_results <- broom::augment(m3)
+
+```
+
+```{r}
+
+ggplot(data = m3_results, 
+       aes(x = experience, y = salary, color = department)) +
+  geom_point() +
+  labs(x="Experience", y="Salary") +
+  scale_colour_discrete('Department') +
+  geom_line(aes(y = .fitted), size = 1)
+
+```
+
+* Plot with the residuals
+
+
+```{r}
+
+ggplot(data = m3_results, 
+       aes(x = experience, y = salary, color = department)) +
+  geom_point() +
+  labs(x = "Experience", y = "Salary") +
+  scale_colour_discrete('Department') +
+  geom_line(aes(y = .fitted), size = 1) +
+  geom_segment(aes(xend = experience, yend = .fitted, colour = department), size = 0.3, linetype = 2)
+  
+
+
+```
+
+* Summary of the model
+
+
+```{r}
+
+summary(m3)
+
+```
+
+
+
+
+### Exercises
+
+
+* Create the four model diagnostic plots. What do you make of the plots?
+
+```{r}
+
+
+
+```
+
+
+* What is the predicted salary with 7 years of experience in Biology?
+
+
+```{r}
+
+m3_coefs <- coef(m3)
+
+
+```
+
+```{r}
+
+## Biology
+
+biology_ex7 <- m3_coefs["(Intercept)"] + m3_coefs["departmentbiology"] + 7*(m3_coefs["experience:departmentbiology"] + m3_coefs["experience"])
+
+
+```
+
+### Exercise:
+
+What is the predicted salary for someone with 7 years of experience Sociology?
+
+
+```{r, eval = FALSE}
+
+sociology_ex7
+
+```
+
+### Exercise:
+
+Try plotting both salaries after 7 years on the graph.
+
+
+```{r, eval = FALSE}
+
+ggplot(data = m3_results, 
+       aes(x = experience, y = salary, colour = `as.factor(department)`)) +
+  geom_point() +
+  labs(x="Experience", y="Salary") +
+  scale_colour_discrete('Department') +
+  geom_line(aes(y = .fitted), size = 1) +
+  geom_point(aes(x = ______, y = ______), color = "black") +
+  geom_point(aes(x = _____, y = ______), color = "black")
+
+```
+
+### Exercise
+
+* Let's visualise the coefficients
+
+```{r}
+
+GGally::ggcoef(m3)
+
+```
+
+
+* Which department get the highest raises (biggest slope)?
+
+```{r}
+
+biology_slope <- m3_coefs["experience:departmentbiology"] + m3_coefs["experience"]
+
+
+```
+
+* Which department has the highest starting salary (biggest intercept)?
+
+```{r, echo = FALSE}
+
+biology_intercept <- m3_coefs["(Intercept)"] + m3_coefs["departmentbiology"]
+
+```
+
+
+# Comparing the models
+
+* Which model has the best fit?
+
+```{r}
+
+broom::glance(m1)
+broom::glance(m2)
+broom::glance(m3)
+
+
+```
+

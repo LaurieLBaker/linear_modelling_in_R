@@ -1,0 +1,45 @@
+install.packages("mice")
+install.packages("VIM")
+
+library(mice)
+library(VIM)
+library(ggplot2)
+library(visdat)
+library(tidyverse)
+
+data(sleep)
+
+vis_dat(sleep)
+
+# Replacing with the mean
+
+sleep$Sleep2<- ifelse(is.na(sleep$Sleep)==TRUE, mean(sleep$Sleep, na.rm = TRUE), sleep$Sleep)
+
+# Imputing using the "pmm": predictive mean matching method
+## Method options: By default, the method uses pmm, predictive mean matching (numeric data) 
+## logreg, logistic regression imputation (binary data, factor with 2 levels) 
+## polyreg, polytomous regression imputation for unordered categorical data (factor > 2 levels) 
+## polr, proportional odds model for (ordered, > 2 levels).
+
+imputed_sleep <- mice(sleep, m=5, method = "pmm", seed = 101)
+
+## Getting the summary of the imputation
+
+summary(imputed_sleep)
+
+## Pulling out the complete data
+complete_sleep1 <- complete(imputed_sleep, 1) ## pulls out imputed dataset 1
+complete_sleep2 <- complete(imputed_sleep, 2) ## pulls out imputed dataset 2
+
+## Pulling out a particular imputed variable (e.g. the variable Sleep)
+
+imputed_Sleep_column <- imputed_sleep$imp$Sleep
+
+
+## Comparing the new data between imputation methods
+
+ggplot() +
+  geom_density(data = sleep, aes(x = Sleep)) +
+  geom_density(data = complete_sleep1, aes(x = Sleep), color = "Blue") +
+  geom_density(data = complete_sleep2, aes(x = Sleep), color = "Green") +
+  geom_density(data = sleep, aes(x = Sleep2), color = "Red")

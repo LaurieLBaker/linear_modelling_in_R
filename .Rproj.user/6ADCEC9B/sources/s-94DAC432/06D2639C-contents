@@ -1,0 +1,1370 @@
+---
+title: "Reproducible Reporting with "
+institute: "Data Science Campus, Office for National Statistics"  
+author: 
+  - "Dr. Laurie Baker"
+date: '`r Sys.Date()`'
+output:
+  xaringan::moon_reader:
+    seal: false
+    lib_dir: libs
+    fig_caption: false
+    css: xaringan-themer.css
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: 14:9
+params:
+  country: Colombia
+---
+
+
+```{r libraries, results='hide', message=FALSE, echo = FALSE, warning=FALSE}
+
+#install.packages("tidyverse")
+#install.packages("gapminder")
+#devtools::install_github("gadenbuie/countdown")
+
+
+library(tidyverse)
+library(gapminder)
+library(countdown)
+library(xaringanExtra)
+library(kableExtra)
+
+xaringanExtra::use_xaringan_extra(include = c("panelset", "tile_view", "share_again", "use_broadcast"))
+
+xaringanExtra::style_share_again(share_buttons = c("twitter", "linkedin", "pocket"))
+
+knitr::opts_chunk$set(out.height = "68%", out.width = "68%")
+
+```
+
+
+class: title-slide, center, bottom
+
+
+# `r rmarkdown::metadata$title`
+
+
+```{r, echo=FALSE, out.width=460, fig.cap="Rmarkdown: text, code, output",  fig.align='center'}
+
+knitr::include_graphics("images/rmarkdown_wizards.png")
+
+```
+
+### `r rmarkdown::metadata$author`
+
+#### `r rmarkdown::metadata$institute`
+
+###### Artwork by @allisonhorst
+
+
+
+
+
+```{r Prepping Country example, echo = FALSE}
+
+# Country of Interest
+gapminder_country <- gapminder %>%
+  filter(country == params$country,
+         year > 1980 & year <= 2010)
+
+# Wider Continent
+gapminder_continent <- gapminder %>%
+  filter(continent == "Americas",
+         year > 1980 & year <= 2010)
+
+# Whole world
+gapminder_sub <- gapminder %>%
+  filter(year > 1980 & year <= 2010)
+```
+
+
+```{r average_lifeExp, echo = FALSE, warnings = FALSE}
+
+average_lifeExp <- gapminder_country %>%
+  summarise(average_lifeExp = round(mean(lifeExp), 2))
+
+lifeExp_country <- gapminder_continent %>%
+  group_by(country) %>%
+  summarise(mean_lifeExp = mean(lifeExp))
+
+
+```
+
+
+```{r setup, include=FALSE}
+
+options(htmltools.dir.version = FALSE)
+
+```
+
+
+
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+
+
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#23395b",
+  secondary_color = "#f48d23",
+  inverse_header_color = "#f48d23"
+)
+
+```
+
+
+---
+
+# You
+
+.pull_left[
+* Have some familiarity with R. 
+
+* Are new to Rmarkdown.
+
+* Are interested in creating reproducible reports.
+
+* Aspire to be a reproducibility wizard!
+
+]
+.pull-right[
+
+
+<img src="images/rmarkdown_wiz.png" alt="Rmarkdown Recipe for success: text, code, output" style="width: 70%; height: 70%" class="center"/>
+Artwork by @allison_horst
+]
+
+???
+
+What I'm assuming about you.
+
+---
+
+
+# The Reproducibility Gold Standard
+
+
+
+<img src="images/spectrum-of-reproducibility-Source-Peng-2011-DOI-101126-science1213847.png" alt="Reproducibility Spectrum. Publication Only, Publication and Code, Publication and Code and Data, Publication and linked and executable code and data, full replication" style="width: 90%; height: 90%" class="center"/>
+
+Image Credit: [Reproducible Research in Computational Science](https://science.sciencemag.org/content/334/6060/1226) by Roger Peng.
+
+???
+
+The reproducibility spectrum shows how you can make your publication more reproducible by providing the fully executable code and data to create a fully reproducible report.
+
+---
+# Bring in the band!
+
+<img src="images/rmarkdown_rockstar.png" alt = "Rmarkdown Band Members: Text, Code, Output" style="width: 65%; height: 65%" class="center"/>
+
+Artwork by @allison_horst
+
+???
+
+
+Rmarkdown is an excellent tool that allows you to combine text, code, and output in one place.
+
+---
+
+# Learning objectives
+
+* Learn the basics of markdown syntax and how to create code chunks.
+
+--
+
+* Learn how to build a fully reproducible report combining code and text using Rmarkdown.
+
+--
+
+* Learn to use parameters to add flexibility to reports in Rmarkdown.
+
+--
+
+* Learn to use `rmarkdown::render()` to render/knit at command line. 
+
+???
+
+The learning objectives of the course include
+
+* Learn the basics of markdown syntax and how to create code chunks.
+
+* Learn how to build a fully reproducible report combining code and text using Rmarkdown.
+
+* Learn to use parameters to add flexibility to reports in Rmarkdown.
+
+* Learn to use `rmarkdown::render()` to render/knit at command line. 
+
+---
+# Getting started
+
+* We'll be working with and adapting the file `Country_Report.Rmd`. 
+
+* For this adventure you'll also need the `tidyverse`, `gapminder`, `shiny`,  `kableExtra`, `knitr` and `rmarkdown` packages.
+
+```{r packages, eval = FALSE}
+#install.packages("tidyverse")
+#install.packages("gapminder")
+#install.packages("shiny")
+#install.packages("kableExtra")
+#install.packages("knitr)
+#install.packages("rmarkdown")
+
+
+library(tidyverse) # tidyverse metapackage for plots, data manipulation and more
+library(gapminder) # gapminder data
+library(shiny) # interactive components for rmarkdown::render
+library(kableExtra) # to create tables
+library(knitr) # to knit rmarkdown files
+library(rmarkdown) # to create rmarkdown reports
+
+```
+
+???
+
+During the course we'll be working with and adapting the file Country_Report.Rmd. 
+You will also want to download and load the following packages:
+- tidyverse, gapminder, shiny, kableExtra, and rmarkdown
+
+You'll need the packages "tidyverse", "gapminder", "shiny", "KableExtra" and "rmarkdown"
+
+---
+# What is RMarkdown?
+
+.pull-left[
+
+* A reproducible record of your work.
+
+
+* .Rmd file that contains the text and code to repeat your work.
+
+
+* Interacts with pandocs to produce **dynamic documents** in different formats: html, pdf, word. 
+]
+
+.pull-right[
+<img src="images/rmarkdown_wizards.png" alt = "Rmarkdown wizardry: text, code, output" style="width: 120%; height: 120%" class="center"/>
+
+Artwork by @allison_horst
+]
+
+???
+
+- Rmarkdown provides a reproducible record of your work
+- It is a .Rmd (the md stands for markdown) file that contains the text and code to repeat your work. 
+- It interacts with pandocs to produce dynamic documents. By dynamic we mean that the documents can take on different formats: html, pdf, word. 
+
+---
+# Your Turn
+
+Let's create our first R Markdown document. 
+
+<img src="images/create_new_RMD_file.PNG" alt="Steps to create a new R Markdown file: Go to File menu, then select New File then select R Markdown. Create a title and choose the output style and you have your first R Markdown file" style="width: 80%; height: 80%" class="center"/>
+Image credit: Rmarkdown cheatsheet
+
+
+???
+
+To create a new R Markdown file: Go to the file menu, then select new file, then select Rmarkdown. Create a title and choose the output style "html_document" and you have your first R Markdown file. 
+---
+
+# Helping Agnes and Teteh
+
+<img src="images/rmarkdown_wizards_stats_adviser.png" alt = "Rmarkdown wizardry for country reports: text, code, output" style="width: 75%; height: 75%" class="center"/>
+
+Artwork by @allison_horst
+
+???
+
+
+* Through this course we are going to be helping Agnes and Teteh. 
+
+* As statistics advisers, they regularly receive requests to produce reports summarising the life expectancy for different countries.
+
+* They have written the code and text for Colombia and wish to generalise it and automate the process.
+
+---
+
+# Your Turn
+
+* Open reproducible_reporting.Rproj in RStudio. 
+* Under Files, navigate to exercises, then activity_1
+* Open Country_Report.Rmd and Knit to html
+
+<img src="images/open_country_report.PNG" alt = "To open the Country_Report.Rmd in the lower right corner open files go to exercises then activity_1" style="width: 75%; height: 75%" class="center"/>
+
+--
+
+`r countdown(minutes = 2, seconds = 00)` 
+ 
+ 
+* Write down a few things you think could be improved in the report.
+
+???
+
+Live coding:
+
+Open the R Project, reproducible_reporting.Rproj.
+
+Under Files, navigate to exercises, then activity_1
+
+Click on the Country_Report.Rmd and knit to html
+
+Answer:
+
+Some of the things that could be improved.
+- The date is incorrect, 
+- There is a lot of R code that is shown that shouldn't be included in a professional publication. 
+- Overall it looks a bit messy.
+
+---
+
+# Country Report
+
+* Plots the average life expectancy between 1980 and 2010 for a country. 
+
+
+```{r lifeExp-plot, echo = FALSE}
+
+
+ggplot() +
+  geom_line(
+    data = gapminder_sub,
+    aes(
+      x = year,
+      y = lifeExp,
+      group = country,
+      color = continent
+    ),
+    alpha = 0.2,
+    lwd = 0.75
+  ) +
+  geom_line(
+    data = gapminder_country,
+    aes(x = year,
+        y = lifeExp,
+        color = continent
+    ),
+    lwd = 2
+    ) +
+  labs(
+    x = "Year",
+    y = "Life Expectancy",
+    title = paste(
+      "Life Expectancy over time in",
+      params$country,
+      "from 1980 to 2010",
+      sep = " "
+    ),
+    color = "Continent"
+  ) +
+  geom_label(
+    data = gapminder_country %>%
+      slice(which.min(year)),
+    aes(
+      x = year, 
+      y = lifeExp, 
+      label = country
+    ),
+    nudge_x = 2,
+    nudge_y = -2.5
+  )
+
+```
+
+???
+
+In their report Agnes and Teteh produce a plot of average life expectancy for each country colour coded by continent. In their plot they highlight the country of interest, in this case Colombia. 
+
+---
+
+# Country Report
+
+* Creates a table of the mean life expectancy by country.
+
+```{r table, echo = FALSE, message = FALSE}
+
+lifeExp_country %>% 
+  kable(booktabs = T,
+        caption = "Mean Life Expectancy in the Americas") %>%
+  kable_styling() %>%
+  row_spec(which(lifeExp_country$country == params$country), bold = T, color = "white", background = "blue")
+
+```
+
+???
+
+They also create a table of the mean life expectancy by country. 
+
+---
+
+# R Markdown anatomy
+
+### 1. YAML header (aka metadata)
+
+### 2. Narrative (our text)
+
+### 3. Code Chunks (our code/plots)
+
+
+???
+
+The anatomy of an R Markdown document consists of the YAML header, where we have our metadata.
+
+The narrative, or the text of our document.
+
+And the code chunks to create our code and plots. 
+
+---
+
+# YAML 
+
+- A typical header contains basic metadata (e.g. `title`, `author`, `date`).
+
+```yaml
+---
+*title: Reproducible Country Report
+*author: Agnes and Teteh
+*date: 30/07/2020
+output: html_document
+---
+```
+???
+
+A typical YAML header contains basic metadata including the title, author, and date of the report. 
+
+
+Optional information to share: 
+- YAML (YAML Ain't Markup Language) is a human-readable data serialization language. 
+- It is commonly used for configuration files and in applications where data is being stored or transmitted. 
+- Like other data serialization languages (e.g. XML and JSON), it provides a standard format to transfer data that applications with different technologies and languages with different data structures can use. 
+
+---
+# YAML
+
+* And rendering instructions (`output: html_document`) used by pandocs.
+
+```yaml
+---
+title: Reproducible Country Report
+author: Agnes and Teteh
+date: 30/07/2020
+*output: html_document
+---
+```
+
+???
+
+The YAML header also contains rendering instructions that is used by pandocs. 
+
+For the audience: Any guess what type of document we are creating from the output specified?
+
+---
+
+# YAML
+
+* Within output there are extra options, (e.g. `theme`, `highlight`, etc):
+
+```yaml
+---
+title: Reproducible Country Report
+author: Agnes and Teteh
+date: 30/07/2020
+output: 
+  html_document:
+*    theme: cosmo
+*    highlight: haddock
+*    number_sections: TRUE
+---
+```
+--
+* Note that the options are nested under what they change using indents.
+
+???
+
+Within output we can specific extra options including the theme, highlight, etc. 
+
+Notice here that these extra options are indented. They are nested under what they change. The theme, highlight, and number_sections are things that modify the html document.
+
+If you aren't getting what you expected, check the indentation, it could be that you've forgotten to indent. 
+
+---
+
+# YAML and Parameters
+
+* You can also specify parameters `params` to change the content of your document.
+
+```yaml
+---
+title: Reproducible Country Report
+author: Agnes and Teteh
+date: 30/07/2020
+output: 
+  html_document:
+    theme: cosmo
+    highlight: haddock
+    number_sections: TRUE
+*params:
+*  country: Colombia
+---
+```
+--
+
+* More on parameters later!
+
+???
+
+You can also specify parameters 'params' to change the content of your document.
+
+Here Teteh and Agnes have specified the country Colombia. We'll cover parameters in greater depth later in the course. 
+
+---
+
+# Your Turn
+
+```yaml
+---
+title: Reproducible Country Report
+author: Agnes and Teteh
+date: 30/07/2020
+output: 
+  html_document:
+    theme: cosmo
+    highlight: haddock
+    number_sections: TRUE
+*   ? 
+params:
+  country: Colombia
+---
+```
+1. Run `?rmarkdown::html_document` in your R console to find out what you can change.
+
+2. What does `toc` and `highlight` do? 
+
+3. Try changing the `theme` and adding a `toc` then rerun the document.
+
+`r countdown(minutes = 6, seconds = 00)` 
+
+???
+
+Let's explore the YAML header further. 
+
+1. Run `?rmarkdown::html_document` in your R console to find out what you can change.
+
+2. What does `toc` and `highlight` do? 
+
+3. Try changing the `theme` and adding a `toc` then rerun the document.
+
+Answers:
+
+2. If we set toc: TRUE this will include a table of contents in the output;
+highlight will change the syntax highlighting style.
+
+3. Changing the theme will change the visual theme, students can reflect on which one they like most and which they think looks best for Agnes and Teteh's professional report. 
+
+By adding the toc, students will see that the document now has a table of contents which you can click on to go to different parts of the document. 
+
+ 
+---
+
+# Your Turn
+
+.pull-left[
+
+```yaml
+---
+title: Reproducible Country Report
+author: Agnes and Teteh
+date: 30/07/2020
+output: 
+  html_document:
+    theme: cosmo
+    highlight: haddock
+    number_sections: TRUE
+    toc: TRUE
+params:
+*  country: Colombia
+---
+```
+
+]
+
+.pull-right[
+
+1. Change `country` to another country in the Americas (e.g. Uruguay, Paraguay).
+2. Rerun the document.
+3. Hint: run `unique(gapminder$country)` to find out what countries are there.
+]
+
+
+`r countdown(minutes = 3, seconds = 00)` 
+ 
+
+--
+
+We'll revisit parameters in more depth later on!
+
+???
+
+In the next turn, try changing country to another country in the Americas. To find out what countries you can change, run unique(gapminder$country). Remember that spelling and capitalization are important!
+
+Answer:
+Students should see that it is possible to rerun the document and the country and report will change accordingly. Agnes and Teteh are on their way to making their report adaptable. 
+
+
+---
+
+# Narrative
+
+
+.pull-left[
+
+```md
+
+# 1st-level header
+
+
+
+## 2nd-level header
+
+
+
+### 3rd-level header
+
+```
+
+`**Bold text**`
+
+`*Italic text*`
+
+`[hyperlink](www.google.com)`
+
+
+
+]
+
+.pull-right[
+
+# 1st-level header
+
+## 2nd-level header
+
+### 3rd-level header
+
+**Bold text**
+
+*Italic text*
+
+[hyperlink](www.google.com)
+
+]
+
+???
+
+To write our narrative we will use the markdown language. 
+
+Included in the slide are some of the main things you will want to know to style your text and add sections.
+
+You use hashes '#' for the section headers. Asterisks '*' to bold and italize text and you can also add hyperlinks using square brackets '[ ]' and parentheses '( )'. 
+
+---
+
+# Your Turn
+
+Using the links below add the section **"About the data"** to the document.
+
+* gapminder: http://www.gapminder.org/data/
+
+* gapminder package: https://github.com/jennybc/gapminder
+
+
+
+### About the data
+
+The data comes from the [gapminder](http://www.gapminder.org/data/) dataset from the [`gapminder` package](https://github.com/jennybc/gapminder) by Jenny Bryan.
+
+`r countdown(minutes = 5, seconds = 00)` 
+
+???
+
+Let's use what we've learned about markdown syntax to add a new section to our document where we cite where we got the dataset.
+
+---
+
+# Code Chunks
+
+<img src="images/add_chunk.png" alt = "Add a code chunk by clicking the plus sign and selecting add a code chunk from the drop down menu in RStudio" style="width: 80%; height: 80%" class="center"/>
+Image Source: [RStudio Rmarkdown cheatsheet](https://rmarkdown.rstudio.com/lesson-15.html)
+
+???
+
+Code chunks in various languages can be added from the drop down menu. 
+
+(Live Coding) 
+
+Image source: RStudio RMarkdown cheatsheet.
+
+---
+
+# Code Chunks
+
+````md
+*```{r Libraries, echo = FALSE}`r ''`
+
+library(tidyverse)
+
+*```
+````
+
+````md
+Starts with ```{} and ends with ```.
+````
+
+???
+
+Code chunks start with three back ticks ``` and then a curly brackets. 
+Each code chunk ends with three back ticks ```. 
+
+---
+
+# Code Chunks
+
+
+````md
+*```{r Libraries, echo = FALSE}`r ''`
+
+library(tidyverse)
+
+```
+````
+Consists of the chunk header `{r Libraries, echo = FALSE}` which specifies
+
+* the **language engine**: `r`
+* an **optional label**: `Libraries`
+* and the **chunk option:** `echo = FALSE`
+
+
+???
+
+The code chunk also consists of a chunk header that specifies
+
+- the language engine, in this case 'r' for R code
+- an optional label. The label we've used in this cases is Libraries because we are loading in the libraries. 
+- and the chunk option, in this case 'echo = FALSE' which means the code will not be included. But more on chunk options later. 
+
+---
+
+# Code Chunks
+
+````md
+```{r Libraries, echo = FALSE}`r ''`
+
+*library(tidyverse)
+
+```
+````
+
+and the code: `library(tidyverse)`.
+
+---
+# Audience
+
+* What audiences would option 1 and 2 be suitable for? 
+
+
+.pull-left[
+
+**Option 1:**
+
+````md
+*```{r Libraries}`r ''`
+
+library(tidyverse)
+
+```
+````
+
+
+**Option 2:**
+
+````md
+*```{r Libraries, echo = FALSE}`r ''`
+
+library(tidyverse)
+
+```
+````
+
+]
+
+.pull-right[
+
+
+**Option 1:**
+
+```{r}
+library(tidyverse)
+```
+
+<br/>
+<br/> 
+
+**Option 2:**
+
+
+```{r, echo = FALSE}
+
+library(tidyverse)
+```
+]
+
+???
+
+* Rmarkdown combines code and text. What we wish to show depends on our audience.
+
+* What audiences would option 1 and 2 be suitable for?
+
+Option 1: colleagues who need to run your code
+
+Option 2: Managers/General Audience
+
+---
+# Chunk options
+
+* **Chunk options** are used to customise the behaviour and output of the code chunks.
+
+--
+
+### Code
+
+* `echo` - Display code in output document (default = TRUE)
+* `eval` - Run code in chunk (default = TRUE)
+* `message` - display code messages in document (default = TRUE)
+* `warning` - display code warnings in document (default = TRUE)
+
+--
+
+### Figures
+
+* `fig.align` - 'left', 'right', or 'center' (default = 'default')
+* `fig.cap` - figure caption as character string (default = NULL)
+* `fig.height, fig.width` - Dimensions of plots in inches
+
+???
+
+Chunk options are used to customize the behaviour and output of the code chunks. 
+
+There are different options for the code:
+
+* `echo` - Display code in output document (default = TRUE)
+* `eval` - Run code in chunk (default = TRUE)
+* `message` - display code messages in document (default = TRUE)
+* `warning` - display code warnings in document (default = TRUE)
+
+There are also different things that we can adjust within the figures
+
+* `fig.align` - 'left', 'right', or 'center' (default = 'default')
+* `fig.cap` - figure caption as character string (default = NULL)
+* `fig.height, fig.width` - Dimensions of plots in inches
+
+---
+# Global and local chunk options
+
+* Chunk options can be set locally (chunk by chunk).
+
+--
+
+* Or globally. 
+
+
+````md
+```{r setup, include = FALSE}`r ''`
+
+*knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+
+```
+
+````
+???
+
+Chunk options can be set locally on a chunk by chunk basis.
+
+
+Or chunk options can be set globally, i.e. for the whole document. This is done using knitr::opts_chunk$set() and specifying the global chunk options you want to set for the whole document. 
+
+---
+
+# Your Turn
+
+Use the following code chunk options to tidy up the report. 
+
+
+* `echo` - Display code in output document (default = TRUE)
+* `eval` - Run code in chunk (default = TRUE)
+* `message` - display code messages in document (default = TRUE)
+* `warning` - display code warnings in document (default = TRUE)
+* `knitr::opts_chunk$set(echo = TRUE, message = FALSE)` - globally
+
+--
+
+If you have time, try playing with the figure options.
+
+* `fig.align` - 'left', 'right', or 'center' (default = 'default')
+* `fig.cap` - figure caption as character string (default = NULL)
+* `fig.height, fig.width` - Dimensions of plots in inches
+
+
+`r countdown(minutes = 10, seconds = 00)` 
+ 
+--
+
+* We're now in line with `Country_Report_Step1_2.Rmd`
+
+???
+
+Let's help Agnes and Teteh clean up their report.
+
+Try changing the chunk options locally (chunk by chunk) or globally.
+
+If you have time, try playing with teh figure options. 
+
+
+---
+
+# Inline R code
+
+* Inline R code is embedded in the text using the syntax *'r '*.
+
+* You can refer to a variable by name (e.g. `average_lifeExp`) in the inline r code after the chunk where it is calculated.
+
+--
+
+### Reporting the average life expectancy
+
+````md
+```{r average_lifeExp_calc}`r ''`
+
+average_lifeExp <- gapminder_country %>%
+  summarise(average_lifeExp = round(mean(lifeExp), 2))
+
+```
+````
+
+The average life expectancy in Colombia between 1980 and 2010 was *'r average_lifeExp'* becomes
+
+
+The average life expectancy in `r params$country` between 1980 and 2010 was `r average_lifeExp`.
+
+???
+
+We can embed inline R code using an opening and closing back tick. We can then refer to a variable name (e.g. average_lifeExp) using inline r code to get that value to appear in the text.
+
+---
+
+# Your Turn
+
+### Reporting maximum and minimum life expectancy
+
+* Add two new code chunks to calculate the minimum and maximum life expectancy.
+* Reference the new values in two sentences.
+  * The minimum life expectancy in Colombia between 1980 and 2010 was ____.
+  * The maximum life expectancy in Colombia between 1980 and 2010 was ____.
+
+* Hint: in R you'll need the functions `max()` and `min()`
+
+`r countdown(minutes = 10, seconds = 00)` 
+ 
+???
+
+Add two new code chunks calculating the minimum and maximum life expectancy and reference these values in two new sentences in the text.
+
+Hint: you'll need to use the functions max() and min(). 
+
+Futher hint: follow the example where the average life expectancy is calculated.
+
+Answer: 
+
+Step 1 is to calculate the new values
+
+```{r min_lifeExp_calc}
+
+min_lifeExp <- gapminder_country %>%
+  summarise(min_lifeExp = round(min(lifeExp), 2))
+
+```
+
+And then refer to the new variable name in the text: `r min_lifeExp`. 
+
+---
+# Parameters revisited
+
+**Parameters** allow you to reuse your document with new inputs (e.g. data, values, etc.)
+
+
+### 1. **Add parameters** 
+
+Set parameters in the header as subvalues of `params`
+
+```yaml
+---
+title: Reproducible Country Report
+author: Agnes and Teteh
+date: 30/07/2020
+output: 
+  html_document:
+    theme: cosmo
+    highlight: haddock
+    number_sections: TRUE
+    toc: TRUE
+*params:
+*  country: Colombia
+---
+```
+???
+
+Parameters allow you to reuse your document with new inputs such as data and values. 
+
+We set parameters in the YAML header as subvalues of params. 
+Remember that subvalues need to be indented as the parameter for country is, country: Colombia. 
+
+---
+# Parameters revisited
+
+**Parameters** allow you to reuse your document with new inputs (e.g. data, values, etc.)
+
+
+### 2. **Call parameters** 
+
+Parameters values are called in the code as `params$<name>`.
+
+* How many times is `params$country` used in the code?
+
+* Where does it appear?
+
+`r countdown(minutes = 3, seconds = 00)` 
+
+???
+
+Answer:
+
+The answer should be 7. It is used to subset the data, and also to change the name as it appear in the text, plots, table, and headings. 
+
+
+---
+# Parameters revisited
+
+**Parameters** allow you to reuse your document with new inputs (e.g. data, values, etc.)
+
+
+### 3. **Set parameters** 
+
+Set values with "knit with parameters" or the params argument of `render()`.
+
+More about `render()` soon!
+
+Let's try rerunning the report for **Paraguay**.
+
+???
+
+We can set values by clicking knit -> knit with parameters, or using the params argument of the render function. More on the render function soon. #
+
+Let's rerun the report for Paraguay
+
+---
+
+# But what about Cambodia?
+
+```{r Creating the life expectancy table Cambodia, echo = FALSE, warning = FALSE, message = FALSE}
+
+# Country of Interest
+gapminder_country <- gapminder %>%
+  filter(country == "Cambodia",
+         year > 1980 & year <= 2010)
+
+# Wider Continent
+gapminder_continent <- gapminder %>%
+  filter(continent == "Americas",
+         year > 1980 & year <= 2010)
+
+# Whole world
+gapminder_sub <- gapminder %>%
+  filter(year > 1980 & year <= 2010)
+
+lifeExp_country <- gapminder_continent %>%
+  group_by(country) %>%
+  summarise(mean_lifeExp = mean(lifeExp))
+
+lifeExp_country %>% 
+  kable(booktabs = T,
+        caption = "Mean Life Expectancy in the Americas") %>%
+  kable_styling() %>%
+  row_spec(which(lifeExp_country$country == "Cambodia"), bold = T, color = "white", background = "blue")
+
+
+```
+
+???
+
+Agnes and Teteh have run into a problem. They've received a request for a country report from Cambodia, but when they rerun the report, they still get a table of the Americas and Cambodia isn't there?
+
+We need to help them parameterize the report for different continents!
+
+---
+# Your Turn
+
+* Add a parameter for continent.
+
+--
+
+* Replace the mentions of **Americas** with your new parameter.
+
+--
+
+* Hint look at how the parameter for country is specified.
+
+
+
+`r countdown(minutes = 10, seconds = 00)` 
+
+???
+
+When thinking about parameters think about what changes. If someone asked you to change the report, where you would need to alter your code if someone asked you for a specific time period, place, or to filter for certain values? This will help you guide where to place parameters and as you adapt your report.
+ 
+---
+# Nearly there
+
+```{r Prepping Country example for Cambodia, echo = FALSE}
+
+# Country of Interest
+gapminder_country <- gapminder %>%
+  filter(country == "Cambodia",
+         year > 1980 & year <= 2010)
+
+# Wider Continent
+gapminder_continent <- gapminder %>%
+  filter(continent == "Asia",
+         year > 1980 & year <= 2010)
+
+# Whole world
+gapminder_sub <- gapminder %>%
+  filter(year > 1980 & year <= 2010)
+```
+
+
+```{r Prepping the data for the life expectancy table Cambodia, echo = FALSE, message = FALSE, warning = FALSE}
+
+
+# Summarising the mean life expectancy to plot
+lifeExp_country <- gapminder_continent %>%
+  group_by(country) %>%
+  summarise(mean_lifeExp = mean(lifeExp))
+
+lifeExp_country %>% 
+  kable(booktabs = T,
+        caption = "Mean Life Expectancy in the Americas") %>%
+  kable_styling() %>%
+  row_spec(which(lifeExp_country$country == "Cambodia"), bold = T, color = "white", background = "blue")
+```
+
+???
+
+We've update instance of "Americas" in the code. But what about for the names of the table? 
+---
+
+# Using paste() to update names
+
+`paste("Life Expectancy over time in",
+      params$country,
+      "from 1980 to 2010",
+      sep = " ")`
+    
+
+* Run `?paste` to see the help file. What does `sep` do?
+* Update the table code to get the correct continent name.
+
+
+`r countdown(minutes = 5, seconds = 00)` 
+
+--
+
+* We're now in line with `Country_Report_Step3_4.Rmd`
+
+???
+
+paste is a useful function that allows us combine vectors, text, and other values into a character string. 
+
+sep is a character or character string to separate the terms. In this case we use a space " ", but we could also specify a comma "," in other circumstances depending on the character string we would like. 
+---
+# What about our title? and the date?
+
+* To change the YAML header title you would call inline R code using the syntax *'r '*.
+
+--
+
+* Date will take a slightly different format: 'r format(Sys.Date(), '%d %B %Y')'
+
+* '?strptime' includes a short guide to POSIX standard to change format of your date.
+
+```yaml
+---
+title: "'r paste('Life Expectancy in ', params$country)'" 
+_author: Agnes and Teteh
+date: "'r format(Sys.Date(), '%d %B %Y')'"
+output: 
+  html_document:
+    theme: cosmo
+    highlight: haddock
+    number_sections: TRUE
+    toc: TRUE
+params:
+  country: Colombia
+---
+```
+
+* What would we want to change %d to to get the full weekday name?
+
+--
+
+* We're now in line with `Country_Report_Step5.Rmd`
+
+???
+
+We will need to use inline R code to update our YAML header. To get today's date we can also use the function Sys.Date() to get the date for our system.
+
+Running ?strptime will give a short guide to the POSIX standard. Looking at the helpful we can see that %d gives us the day of the month as a decimal number. What would we want to change %d to if we wanted to get the full weekday name? Answer: %A
+ 
+---
+# Creating multiple files using `render()`
+
+* All our changes are captured in `Country_Report_Final.Rmd`
+
+--
+
+* Use `rmarkdown::render()` to render/knit at the command line or console.
+
+**Key arguments**
+
+* **input** file to render
+* **output_format**: the output format
+* **output_options**: list of render options
+* **output_file**: name of output file
+* **params**: list of params to use.
+
+???
+
+Now that we've helped Agnes and Teteh parameterize their report, we can use the render function from the rmarkdown, rmarkdown::render(), to create the new report. There are different arguments we can specify: 
+
+* **input** file to render
+* **output_format**: the output format
+* **output_options**: list of render options
+* **output_file**: name of output file
+* **params**: list of params to use.
+
+---
+# Creating multiple files using `render()`
+
+* Asking for the parameters:
+```{r, eval = FALSE}
+
+rmarkdown::render(input = "Country_Report_Final.Rmd", 
+                  output_file = "newreports/Jamaica_CountryReport.html", 
+                  params = "ask")
+
+```
+
+--
+* Providing the parameters in a list:
+```{r, eval = FALSE}
+
+rmarkdown::render(input = "Country_Report_Final.Rmd", 
+                  output_file = "Jamaica_CountryReport.html", 
+                  params = list(country = "Jamaica", continent = "Americas"))
+
+```
+
+???
+
+There are a couple options we can try when using the render function. We can have it ask for the parameters or we can provide the parameters as a list.
+
+---
+
+# For loops
+
+<img src="images/forloops.png" alt="For loops: the roundabouts of the R playground" style="width: 70%; height: 70%" class="center"/>
+
+Artwork by @alisonhorst
+
+???
+
+Rendering each report one by one may work in some cases, but if we want to render multiple reports we could use a for loop. Where for each set of parameters e.g. Jamaica, Americas; India, Asia; Cote d'Ivoire, Africa, we generate a report.  
+
+---
+
+# Generating multiple reports using for loops
+
+* Open `render_report.R`
+
+```{r report countries, eval = FALSE}
+
+report_countries <- data.frame(country = c("Bulgaria", "Burkina Faso", "Cambodia", "Cameroon", "Canada"), 
+                               continent = c("Europe", "Africa", "Asia", "Africa", "Americas"), 
+                               stringsAsFactors = FALSE)
+
+
+for (i in 1:nrow(report_countries)){
+
+rmarkdown::render(input = "Country_Report_Final.Rmd", 
+                  output_file = paste0("new_reports/",report_countries[i, "country"],"_Country_Report.html"),
+                  params = list(country = report_countries[i, "country"],
+                                continent = report_countries[i, "continent"]))
+
+}  
+
+```
+
+???
+
+Here's an example of using a for loop in practice. We first define a new data frame where we store our parameter combinations for country and continent.
+
+Next, we run a for loop for each country, continent combination. Notice that we use the paste function here so that the file names will also change. We don't want to add a space so we use paste0.  
+
+For Instructors:
+Note, you will want to make sure that the working directory is set to the location of render_report.R. This can be done through the menus: Session -> Set Working Directory -> To Source File Location
+
+
+---
+# Resources and next steps
+
+* [R Markdown: The Definitive Guide](https://bookdown.org/yihui/rmarkdown/)
+
+
+<img src="images/spectrum-of-reproducibility-containers.png" alt="Reproducibility Spectrum: publication and data and, code and documentation, code and documentation and easy installation, code and documentation and easy installation and runtime environment reproduction" style="width: 80%; height: 80%" class="center"/>
+
+
+
+Image Credit: [Scientific Data Analysis Pipelines and Reproducibility](https://towardsdatascience.com/scientific-data-analysis-pipelines-and-reproducibility-75ff9df5b4c5) by Altuna Akalin
+
+
+???
+
+We're on our way to becoming more reproducible!
+
+For more information on R Markdown and what is possible check out the free online book. 
+
+The next diagram is just to highlight that there's more to do on our reproducible journey including continuous integration and getting our packages and environments in order. 
+
+
+
+---
+
+class: center, middle
+
+# Thanks!
+
+Slides created via the R package [**xaringan**](https://github.com/yihui/xaringan).
+
+The chakra comes from [remark.js](https://remarkjs.com), [**knitr**](http://yihui.name/knitr), and [R Markdown](https://rmarkdown.rstudio.com).

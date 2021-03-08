@@ -1,0 +1,57 @@
+unnamed-chunk-1	::
+unnamed-chunk-2	::
+packages	library
+unnamed-chunk-3	::
+salaries	%>%	as_factor	department	mutate	read_csv
+unnamed-chunk-4	head	salaries
+unnamed-chunk-5	salaries	summary
+unnamed-chunk-6	
+first-plot1a	aes	geom_density	ggplot	salaries	salary
+first-plot2a	aes	department	geom_bar	ggplot	labs	salaries
+first-plot3a	aes	department	experience	geom_point	ggplot	salaries	salary
+first-plot4a	aes	department	experience	geom_point	ggplot	salaries	salary
+first-plot5a	aes	department	geom_boxplot	ggplot	salaries	salary
+first-plot6a	aes	department	geom_violin	ggplot	salaries	salary
+unnamed-chunk-7	~	df	lm
+unnamed-chunk-8	~	lm	salaries
+unnamed-chunk-9	m1	summary
+unnamed-chunk-10	::	head	m1
+first-plot7a	aes	experience	geom_point	geom_smooth	ggplot	lm	m1_results	salary
+unnamed-chunk-11	::
+first-plot8a	.fitted	aes	experience	geom_point	geom_segment	geom_smooth	ggplot	lm	m1_results	salary
+first-plot9a	m1	plot
+first-plot10a	m1	plot
+first-plot11a	m1	plot
+unnamed-chunk-12	m1	plot
+first-plot12a	m1	plot
+first-plot13a	aes	department	experience	geom_point	ggplot	labs	salaries	salary	scale_colour_discrete
+unnamed-chunk-13	~	lm	salaries
+unnamed-chunk-14	::	m2
+first-plot14a	.fitted	aes	department	experience	geom_line	geom_point	ggplot	labs	m2_results	salary	scale_colour_discrete
+first-plot15a	.fitted	aes	department	experience	geom_line	geom_point	geom_segment	ggplot	labs	m2_results	salary	scale_colour_discrete
+unnamed-chunk-15	m2	summary
+unnamed-chunk-16	m2	plot
+unnamed-chunk-17	m2	plot
+unnamed-chunk-18	m2	plot
+unnamed-chunk-19	m2	plot
+first-plot16a	::	m2
+unnamed-chunk-20	coef	m2	names
+unnamed-chunk-21	m2_coef
+unnamed-chunk-22	.fitted	::	aes	biology_ex6	department	experience	geom_line	geom_point	ggplot	labs	m2	salary	scale_colour_discrete	sociology_ex6
+unnamed-chunk-23	.fitted	::	aes	biology_ex6	department	experience	geom_line	geom_point	ggplot	labs	m2	salary	scale_colour_discrete	sociology_ex6
+unnamed-chunk-24	::	~	lm	salaries
+first-plot17a	.fitted	aes	department	experience	geom_line	geom_point	ggplot	labs	m3_results	salary	scale_colour_discrete
+first-plot18a	.fitted	aes	department	experience	geom_line	geom_point	geom_segment	ggplot	labs	m3_results	salary	scale_colour_discrete
+unnamed-chunk-25	m3	summary
+unnamed-chunk-26	c	m3	par	plot
+unnamed-chunk-27	c	m3	par	plot
+unnamed-chunk-28	coef	m3
+unnamed-chunk-29	m3_coefs
+unnamed-chunk-30	sociology_ex7
+unnamed-chunk-31	
+unnamed-chunk-32	::	m3
+unnamed-chunk-33	m3_coefs
+unnamed-chunk-34	m3_coefs
+unnamed-chunk-35	::
+unnamed-chunk-36	::	m1	m2
+unnamed-chunk-37	::	m2	m3

@@ -1,0 +1,392 @@
+---
+title: "Data Science For Policy"
+author: "Laurie Baker"
+date: "25/02/2020"
+output: 
+    ioslides_presentation:
+        widescreen: true
+
+---
+
+## Overview
+
+*  Working with and combining administration data to deliver SDGs
+*  Learning to tell a data story: from project conception to policy brief
+
+![](plots/SDGs.PNG){width=650px}
+
+
+## Case Study
+
+
+* Main question: Can we use administrative data to measure regional differences in population health/wellbeing?
+* Stakeholder: Ministry of Health
+* Sustainable Development Goals: Reduced Inequalities and Good Health and Wellbeing
+
+![](plots/SDGs.PNG){width=650px}
+
+## Course Overview:
+
+* Day 1: How to Develop a Data Science Question
+* Day 2: Preprocessing the data
+* Day 3 and 4: Analysis and Visualisation of Data Using R
+* Day 5: Writing your own Policy Brief
+
+## Day 1 Recap: How to Develop a Data Science Question
+
+  * Identify the needs of stakeholders
+  * Develop a project plan to meet stakeholders needs
+  * Identify the ethical implications of the project
+ 
+## Format for the next few days
+
+* Give an overview of the code. 
+
+* Practical: running the code together
+ 
+## Data Overview
+
+* England prescriptions data
+
+    * Practice-level data for all practices in England. 
+    * Drugs prescribed, Quantity.
+    * Practice postcode
+    * BNF Code:*  a set of therapeutic classifications defined by the British National Formulary (BNF).
+* Prescriptions and related illnesses: 
+    * blood pressure, cardiovascular disease, diabeties, and depression. 
+
+* Linked data sets
+
+  * Multiple Deprivation Indices
+  * Rural Urban Classification
+  * Practice Population
+
+## Day 2: Preprocessing the data
+
+Aim: Learn to explore and preprocess the data.
+
+  * Reading in the data
+  * Renaming variables
+  * Selecting and filtering columns and rows.
+  * Grouping and summarising different variables. 
+  * Creation of new variables using mutate. 
+  * Using text analysis to look for medicine matches
+  * Combining different data sets using joins.
+  
+## Preprocessing: Reading in the data
+
+Before you read in a data file you want to ask yourself two questions:
+
+1. What type of file is it?
+2. Where is the file stored?
+
+The tidyverse comes with several useful functions for reading in data.
+
+ * `read_csv`: reads in a .csv file
+ * `read_excel`: from the `readxl` package reads in an excel file (.xls and .xlsx).
+ 
+## Preprocessing: Reading in the data
+
+ * Follow form: path/name. 
+ 
+```{r Reading in the data, results='hide', message=FALSE, warning=FALSE}
+
+prescriptions <- read_csv(file = "data/T201812PDPI BNFT.csv")
+
+drug_illness_data <- read_csv(file = "data/drug_list.csv")
+
+patients_prac <- read_csv(file = "data/gp-reg-patients-prac-quin-age.csv")
+
+```
+
+## Preprocessing: getting to know the data
+
+There are several tools we can use to get to know the data.
+
+ * `View()`: allows us to view the data frame as a spreadsheet.
+ * `nrow()`: tells us the number of rows in our data frame.
+ * `names()`: gives us the names of the columns in our data frame.
+ * `dim()`: tells us the dimensions of our data frame.
+ * `summary()`: give us summary statistics (counts, min, median, mean, max). 
+ * `head()`: gives us the first 6 elements of the data.
+ * `tail()`: gives us the last 6 elements of the data.
+ * `str()`: tells us the variable type (e.g. Factor, num (number), int (integer)). 
+ * `unique()`: tells us the unique elements of a variable.
+
+
+## Preprocessing: renaming variables
+
+* `rename(data, new_name = old_name)`
+
+```{r Renaming variables}
+
+prescriptions <- rename(prescriptions, 
+                               PracCode = PRACTICE, 
+                               BNFCode = "BNF CODE", 
+                               BNFName= "BNF NAME", 
+                               Items = ITEMS, 
+                               Quantity = QUANTITY, 
+                               Date = PERIOD, 
+                               Cost = "ACT COST")
+
+```
+
+## Preprocessing: intro to the dplyr verbs
+
+  * `select()` subsets columns based on their names.
+  * `filter()` subsets rows based on their values.
+  * `summarise()` calculates summary statistics.
+  * `group_by()` groups variable for summarising.
+  * `mutate()` adds new columns that are functions of existing variables. 
+
+## Preprocessing: selecting columns
+
+```{r Select the column illness using select(), eval = FALSE}
+
+  select(drug_illness_data, illness)
+
+  drug_illness_data %>%
+      select(illness)
+
+```
+
+## Preprocessing: subsetting rows using `filter()`
+
+For filtering it is useful to know your set of operators:
+
+Logical Operator| Description
+:--------------:|:------------:
+        <       | Less Than
+       <=       | Less Than or Equal To
+       \>       | Greater Than
+       >=       | Greater Than or Equal To
+       ==       | Equal To
+       !=       | Not Equal To
+       \|       | Or
+        &       | And
+  %in% c(....)  | Membership **one in** a list of elements
+
+## Preprocessing: subsetting rows using `filter()`
+
+For filtering it is useful to know your set of operators:
+
+Logical Operator| Description
+:--------------:|:------------:
+        <       | Less Than
+       <=       | Less Than or Equal To
+       \>       | Greater Than
+       >=       | Greater Than or Equal To
+       ==       | Equal To
+       !=       | Not Equal To
+       \|       | Or
+        &       | And
+  %in% c(....)  | Membership **one in** a list of elements
+
+```{r Use filter to pick out a particular country}
+
+drug_illness_data %>%
+    filter(illness == "diabeties")
+
+```
+
+## Preprocessing: Grouping and summarising variables
+
+* `summarise()` uses existing R functions to calculate summary statistics. 
+
+```{r}
+drug_illness_data %>%
+  group_by(illness) %>%
+  summarise(count = n())
+```
+
+
+## Preprocessing: Create new variables using `mutate()`
+
+```{r}
+
+prescriptions_df <- prescriptions_df %>%
+  mutate(Total_Cost = Cost*Items)
+
+summary(prescriptions_df$Total_Cost)
+
+```
+
+## The pipe function and combining multiple verbs
+
+![](plots/assembly_line.jpg){width=350px}
+
+## The pipe function and combining multiple verbs
+
+```{r Which practices sold the most prescriptions}
+
+prescriptions_df %>%
+  group_by(PracCode) %>%
+  summarise(Total_Sales = sum(Total_Cost)) %>%
+  arrange(desc(Total_Sales))
+
+```
+
+## Preprocessing: Using text analysis to look for medicine matches
+
+Steps
+
+1. Defining the search
+2. 
+
+## Preprocessing: Text Analysis: Defining the search
+
+We wish to match the prescriptions (`BNFName`) to the medications and illness data set. 
+
+**Preview of the BNFName values**
+
+```{r Preview of the BNFName values}
+
+prescriptions_df %>%
+  select(BNFName) %>%
+  head(3)
+
+```
+
+**Preview of our medication illness data**
+
+```{r Preview of the values from the column medication}
+
+drug_illness_data %>%
+  select(medication) %>%
+  head(3)
+
+```
+We need to search through the strings (character vectors) i.e. (Sod Alginate/Pot Bicarb_Tab Chble 500mg) to look for matches to "fluoxetine" and the other medicines. 
+
+
+## Preprocessing: Using text analysis to look for medicine matches
+
+We will do this using three main functions
+
+- `str_c`: Joins multiple strings into a single string. 
+    - This combines all the medicines we are interested in into a single string where we can check to see if any part of the pattern (i.e. any medicine) appears in our prescription description `BNFName`.
+
+For the detecing we use:
+
+- `str_detect`: detects the presence or absence of a pattern in a string. 
+- `str_subset`: keeps strings matching a pattern or finds positions. It is a wrapper around `str_detect`.
+- `str_extract`: extracts matching patterns from a string. 
+
+## Preprocessing: Combining data sets using joins
+
+
+![](plots/explaining_joins.jpg){width=350px}
+
+Let's walk through the different types of joins using a simple example. 
+
+**Joining the Person Table and Job Table**
+
+**Person Table**
+
+```{r Defining the person table}
+
+(person_table <- data.frame(Person_ID = c("Person1", "Person2"), Name = c("Jane Doe", "John Smith"), Job_ID = c("Job_1", "NA")))
+
+
+```
+
+**Job Table**  
+   
+```{r Defining the job table}   
+
+job_table <- data.frame(Job_ID = c("Job_1", "Job_2"), Job_Name = c("Programmer", "Statistician"))
+
+job_table
+
+```
+
+### Inner join:
+
+With an inner join, rows where there’s a match on the join criteria are returned. Unmatched rows are excluded.
+
+```{r Inner join example}
+
+inner_join(x = person_table, y = job_table, by = "Job_ID")
+
+```
+
+### Left join:
+
+With a left join, you get all rows from the left side of the join even if there are no matching rows on the right side. You only get rows from the right side where there’s a join match to a row on the left.
+
+```{r Left join example}
+
+left_join(x = person_table, y = job_table, by = "Job_ID")
+
+```
+
+### Right join:
+
+With a right join, you get all the rows from the left side of the join only where there’s a match on the right. You get all rows from the right side of the join even if there are no matching rows on the left.
+
+```{r Right join example}
+
+right_join(x = person_table, y = job_table, by = "Job_ID")
+
+```
+
+### Full join
+
+With an full join, you get all rows from the left and right hand side, joined where the criteria matches.
+
+```{r Full join example}
+
+full_join(x = person_table, y = job_table, by = "Job_ID")
+
+```
+
+
+## Preprocessing: Removing data sets that are no longer in use
+
+```{r remove data sets using rm(), eval = FALSE}
+
+rm(prescriptions)
+
+```
+
+## Grouping and summarising different variables
+
+## Day 3: Analysis and Communication of Data Using R
+
+  * Aggregate data at the postcode level.
+
+       * Count number of prescriptions per illness at each postcode
+       * Sum population practices. 
+       * Output: prevalence of each illness/population. 
+  * Use clustering to classify postcodes based on the prevalence of different illnesses. 
+     * Use k-means. Discuss cluster selection.
+  * Explore make up of clusters using principal components analysis. 
+  * Link clusters to Multiple Deprivation Index. 
+  * Explore urban rural divide.
+
+## Day 3: What is an outlier?
+
+  * Define the scope of the study 
+    * Defining what is representative: e.g. Practices > 1000 people. 
+  * Outliers: data inaccuracies
+  * Outliers: data outside the range of values?
+  
+  * Data inaccuracies, 
+
+## Day 4: Communication of results
+
+  * Accurately describing the analysis.
+  * Prescription prevalence vs. Illness prevalence
+  * Context: December, data used. 
+
+Drafting the Policy Brief
+
+ * Pick out the most important findings from the analysis.
+ * Create visualisations to contextualise the data and show the results. 
+ * Use visualisations to create structure for the policy brief.
+
+## Day 5: Write your own Policy Brief
+
+ * Pick out the most important findings from the analysis.
+ * Create visualisations to contextualise the data and show the results. 
+ * Use visualisations to create structure for the policy brief.
