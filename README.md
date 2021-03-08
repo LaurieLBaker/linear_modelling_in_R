@@ -1,5 +1,8 @@
 # An Introduction to Linear Modelling in R
 
+<img src="slides/images/tidydata_5.png" alt = "Data Analysis assembly line: Wrangle, Visualise, Model" height="600px" />
+Artwork by @AllisonHorst
+
 # You
 
 * Are familiar with R. 
@@ -55,4 +58,16 @@ In this course we explore linear models and their capabilities using a simulated
 * How to use Adjusted R-squared and AIC to compare models.
 
 # Slides and Exercises
+
+<img src="slides/images/dragon_residual.png" alt = "Residuals are the information left over from the model. For instance if a dragon's predicted weight is 3.9 tons but her actual weigh is 4.2 tons, the residual would be 0.3 tons" height="600px" />
+
+Artwork by @AllisonHorst
+
+
+## Course Instructions
+
+Follow the [slides](slides/linear_modelling_slides.html) and complete the [exercises](exercises/linear_modelling_exercises.Rmd).
+
+To view the presenter notes in the slides, type 'p'. If you would like to edit or adapt the slides you will need to install the package [Xaringan](https://bookdown.org/yihui/rmarkdown/xaringan-start.html) and follow the instructions in the link.
+
 
